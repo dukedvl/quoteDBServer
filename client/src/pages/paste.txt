@@ -1,0 +1,10 @@
+//Add Quote input form 
+
+<div align="center">
+          <form action="/quotes" method="post">
+            Quote: <br/><textarea autosize="false" height="500" minwidth="800" type="text"/> <br/>
+            Author: <br/> <input type="text"/> <br/>
+            <br/>
+            <Button variant="contained" color="primary" type="submit">Add Quote</Button>
+         </form>
+        </div>
