@@ -25,8 +25,8 @@ class Home extends React.Component {
 
     await fetch('/api/quotes', requestOptions)
       .then((resp) => resp.json())
-      .then((data) => {
-        this.setState({ quoteList: data });
+      .then((row) => {
+        this.setState({ quoteList: row });
       });
 
     console.log("list of quotes:" + JSON.stringify(this.state.quoteList));
@@ -98,7 +98,7 @@ class Home extends React.Component {
               <td>
                 <div align="left">
                   {
-                    this.state.quoteList.map((quote, i) => {
+                    Array.from(this.state.quoteList).map((quote, i) => {
                       return (
                         <Card variant="outlined" className="Card" key={i}>
                           <CardContent>
@@ -111,7 +111,7 @@ class Home extends React.Component {
                             <Typography variant="subtitle2">
                               -{quote.author}
                             </Typography>
-                            <CardActions disable-spacing>
+                            <CardActions disable-spacing="true">
                               <Favorite />
                               <IconButton onClick={(e) => { this.deleteQuote(e, quote.id) }}>
                                 <DeleteForever />

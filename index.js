@@ -2,14 +2,14 @@ const express = require('express');
 const path = require('path');
 const bodyparser = require('body-parser');
 
-const mysql = require('mysql');
+const pg = require('pg');
 
-var mysqlConnection = mysql.createConnection({
-    host: '192.168.1.5',
-    port: '34908',
-    user: 'userOne',
+const pool = new pg.Pool({
+    host: '192.168.1.193',
+    port: '5432',
+    user: 'quotes',
     password: 'yippy',
-    database: 'TestStoreDB1'
+    database: 'dbo.quotes'
 });
 
 const app = express();
@@ -18,7 +18,7 @@ app.use(bodyparser.json());
 
 // Serve the static files from the React app
 
-mysqlConnection.connect((err) => {
+pool.connect((err) => {
     if (!err) {
         console.log('DB Connection Established Successfully');
     }
@@ -36,10 +36,10 @@ app.get('/api/quotes/:id', (request, response) => {
 
         console.log(`Retrieving quote ID= ${quoteId}`);
 
-        mysqlConnection.query(`SELECT * FROM tbl_quotes WHERE id=${quoteId}`, (err, rows) => {
+        pool.query(`SELECT * FROM tbl_quotes WHERE id=${quoteId}`, (err, rows) => {
 
             if (!err) {
-                response.json(rows);
+                response.json(rows.rows);
             }
             else {
                 console.log(err);
@@ -60,10 +60,10 @@ app.get('/api/quotes/author/:author', (request, response) => {
 
         console.log(`Retrieving all authors Name=${authorName}`);
 
-        mysqlConnection.query(`SELECT * FROM tbl_quotes WHERE author='${authorName}'`, (err, rows) => {
+        pool.query(`SELECT * FROM tbl_quotes WHERE author='${authorName}'`, (err, rows) => {
 
             if (!err) {
-                response.json(rows);
+                response.json(rows.rows);
             }
             else {
                 console.log(err);
@@ -77,12 +77,14 @@ app.get('/api/quotes/', (request, response) => {
 
     console.log('Retrieving all Quotes..(Get-Handler)');
 
-    mysqlConnection.query('SELECT * FROM tbl_quotes', (err, rows) => {
-        if (!err) {
-            response.json(rows);
+    pool.query('SELECT * FROM tbl_quotes;', (err, res) => {
+        if (res!==undefined) {
+            response.send(res.rows);
         }
         else {
+            console.log("Postgres error position: ", err.position);
             console.log(err);
+
             response.send(404);
         }
     });
@@ -95,7 +97,7 @@ app.post('/api/quotes', (request, response) => {
     console.log(`Adding Quote: ${quoteAddition.quote}`);
     console.log(`Adding Author: ${quoteAddition.author}`);
 
-    mysqlConnection.query('INSERT INTO tbl_quotes (timestamp, author,quote) VALUES (?, ?, ?) ', [new Date().toISOString().slice(0, 19).replace('T', ' '), quoteAddition.author, quoteAddition.quote]);
+    pool.query(`INSERT INTO tbl_quotes(timestamp, author, quote) VALUES ('${new Date().toISOString()}', '${quoteAddition.author}', '${quoteAddition.quote}');`);
 
     response.status(200).send("done");
 
@@ -109,7 +111,7 @@ app.delete('/api/quotes/:id', (request, response) => {
 
         console.log(`deleting quote ID=${quoteId}`);
 
-        mysqlConnection.query(`DELETE FROM tbl_quotes WHERE ID=${quoteId}`, (err, rows, fields) => {
+        pool.query(`DELETE FROM tbl_quotes WHERE ID=${quoteId}`, (err, rows, fields) => {
             if (!err) {
                 response.sendStatus(200);
             }
